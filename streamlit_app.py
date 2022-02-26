@@ -3,10 +3,10 @@ import os
 
 import streamlit as st
 
-@st.cache
 def load_layer_data(file, layer):
-    with open(file, "r") as fp:
-        st.session_state[f'layer_{layer}'] = json.load(fp)
+    if f"layer_{layer}" not in st.session_state:
+        with open(file, "r") as fp:
+            st.session_state[f'layer_{layer}'] = json.load(fp)
 
 # set page config to wide layout
 st.set_page_config(layout='wide')
@@ -24,13 +24,17 @@ with st.sidebar:
 path = f'./visualizations/{st.session_state.model}/col_0'
 layer_files = [f'{path}/{name}' for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
 layer_files.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
+
 with st.sidebar:
     # create a checkbox for every layer
     for layer in range(len(layer_files)):
         st.checkbox(f'Layer {layer}', value=False, key=f'check_box_layer_{layer}', on_change=load_layer_data, args=(layer_files[layer], layer))
 
+placeholders = [st.empty() for _ in range(len(layer_files))]
 
 for layer in range(len(layer_files)):
     if f'layer_{layer}' in st.session_state:
-        with st.expander(f'Layer {layer}'):
+        with placeholders[layer].expander(f'Layer {layer}'):
             st.components.v1.html(st.session_state[f'layer_{layer}'], height=1000, width=800, scrolling=True)
+    else:
+        placeholders[layer].empty()
