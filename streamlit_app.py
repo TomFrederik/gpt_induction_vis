@@ -3,15 +3,10 @@ import os
 
 import streamlit as st
 
-def load_layer(model, layer, placeholders, file):
-    if st.session_state[f'layer_{layer}']:
-        with placeholders[layer]:
-            with st.expander(f'Layer {layer}'):
-                with open(file, "r") as fp:
-                    data = json.load(fp)
-                st.components.v1.html(fp, height=1000, width=800, scrolling=True)
-    else:
-        placeholders[layer] = st.empty()
+@st.cache
+def load_layer_data(file, layer):
+    with open(file, "r") as fp:
+        st.session_state[f'layer_{layer}'] = json.load(fp)
 
 # set page config to wide layout
 st.set_page_config(layout='wide')
@@ -25,19 +20,17 @@ with st.sidebar:
         key='model',
     )
 
-path = f'./visualizations/{st.session_state.model}'
-
-# get number of directories in path
-num_cols = len([name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))])
-col_path = f'{path}/col_0'
-
-layer_files = [f'{col_path}/{name}' for name in os.listdir(col_path) if os.path.isfile(os.path.join(col_path, name))]
-print(f"num layers = {len(layer_files)}")
-
-# create a placeholder for every layer
-placeholders = [st.empty() for _ in range(len(layer_files))]
-
+# get layer file names
+path = f'./visualizations/{st.session_state.model}/col_0'
+layer_files = [f'{path}/{name}' for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]
+layer_files.sort(key=lambda x: int(x.split('_')[-1].split('.')[0]))
 with st.sidebar:
     # create a checkbox for every layer
     for layer in range(len(layer_files)):
-        st.checkbox(f'Layer {layer}', value=False, key=f'layer_{layer}', on_change=load_layer, args=(st.session_state.model, layer, placeholders, layer_files[layer]))
+        st.checkbox(f'Layer {layer}', value=False, key=f'check_box_layer_{layer}', on_change=load_layer_data, args=(layer_files[layer], layer))
+
+
+for layer in range(len(layer_files)):
+    if f'layer_{layer}' in st.session_state:
+        with st.expander(f'Layer {layer}'):
+            st.components.v1.html(st.session_state[f'layer_{layer}'], height=1000, width=800, scrolling=True)
