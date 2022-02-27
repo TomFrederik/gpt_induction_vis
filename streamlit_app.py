@@ -15,7 +15,7 @@ st.set_page_config(layout='wide')
 with st.sidebar:
     st.selectbox(
         label='Model',
-        options=['gpt2-xl', 'gpt-neo-2.7B', 'gpt-j-6B'],
+        options=['gpt2-xl', 'gpt-neo-2.7B'],
         index=0,
         key='model',
     )
